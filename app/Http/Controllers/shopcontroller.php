@@ -81,38 +81,38 @@ class shopcontroller extends Controller
         return redirect()->route('catalogarmarcas')->with('success', 'Marca agregada correctamente.');
     }
 
-    // 🔹 3. Editar una marca existente
     public function update(Request $request, $idma)
     {
         // Buscar la marca a editar
         $marca = marcas::findOrFail($idma);
-
+    
         $request->validate([
             'nombre_marca' => 'required|string|max:255',
             'descripcion' => 'required|string|max:255',
             'archivo' => 'nullable|image|mimes:jpeg,png,jpg,gif|max:2048'
         ]);
-
+    
         // Subir nueva imagen si se ha seleccionado una
         if ($request->hasFile('archivo')) {
             // Eliminar imagen anterior si existe
             if ($marca->archivo) {
-                Storage::disk('public')->delete($marca->archivo); // Usar Storage correctamente
+                Storage::disk('public')->delete($marca->archivo);
             }
-
+    
             // Guardar nueva imagen
             $marca->archivo = $request->file('archivo')->store('marcas', 'public');
         }
-
+    
         // Actualizar los demás datos de la marca
         $marca->nombre_marca = $request->nombre_marca;
         $marca->descripcion = $request->descripcion;
-
+    
         // Guardar los cambios en la base de datos
         $marca->save();
-
+    
         return redirect()->route('catalogarmarcas')->with('success', 'Marca actualizada correctamente.');
     }
+    
 
     // 🔹 4. Eliminar una marca
     public function destroy($idma)
