@@ -5,7 +5,7 @@ namespace App\Http\Controllers;
 use Illuminate\Http\Request;
 use App\Models\marcas;
 use Illuminate\Support\Facades\Storage;
-
+use Session;
 
 class shopcontroller extends Controller
 {
@@ -61,58 +61,61 @@ class shopcontroller extends Controller
     {
         $request->validate([
             'nombre_marca' => 'required|string|max:255',
-            'descripcion' => 'required|string|max:255',
-            'archivo' => 'nullable|image|mimes:jpeg,png,jpg,gif|max:2048'
+            'descripcion' => 'required|string',
+            'archivo' => 'nullable|image|mimes:jpeg,png,jpg,gif|max:2048', // Ahora puede ser opcional
         ]);
 
-        // Subir la imagen si existe
-        $rutaImagen = null;
+        $nombreArchivo = null; // Por defecto, no hay imagen
+
         if ($request->hasFile('archivo')) {
-            $rutaImagen = $request->file('archivo')->store('marcas', 'public');
+            $archivo = $request->file('archivo');
+            $nombreArchivo = time() . '.' . $archivo->getClientOriginalExtension();
+            $archivo->move(public_path('archivos'), $nombreArchivo);
         }
 
-        // Crear nueva marca
         marcas::create([
             'nombre_marca' => $request->nombre_marca,
             'descripcion' => $request->descripcion,
-            'archivo' => $rutaImagen
+            'archivo' => $nombreArchivo, // Se guarda como null si no hay imagen
         ]);
 
-        return redirect()->route('catalogarmarcas')->with('success', 'Marca agregada correctamente.');
+        session()->flash('success', 'Marca creada correctamente.');
+
+        return redirect()->back();
     }
 
-    public function update(Request $request, $idma)
+    public function update(Request $request, $id)
     {
-        // Buscar la marca a editar
-        $marca = marcas::findOrFail($idma);
-    
         $request->validate([
             'nombre_marca' => 'required|string|max:255',
-            'descripcion' => 'required|string|max:255',
-            'archivo' => 'nullable|image|mimes:jpeg,png,jpg,gif|max:2048'
+            'descripcion' => 'required|string', // Validación de la descripción
+            'archivo' => 'nullable|image|mimes:jpeg,png,jpg,gif|max:2048',
         ]);
-    
-        // Subir nueva imagen si se ha seleccionado una
-        if ($request->hasFile('archivo')) {
-            // Eliminar imagen anterior si existe
-            if ($marca->archivo) {
-                Storage::disk('public')->delete($marca->archivo);
-            }
-    
-            // Guardar nueva imagen
-            $marca->archivo = $request->file('archivo')->store('marcas', 'public');
-        }
-    
-        // Actualizar los demás datos de la marca
+
+        $marca = marcas::findOrFail($id);
         $marca->nombre_marca = $request->nombre_marca;
-        $marca->descripcion = $request->descripcion;
-    
-        // Guardar los cambios en la base de datos
+        $marca->descripcion = $request->descripcion; // Asegúrate de agregar la descripción
+
+        // Si se sube un nuevo archivo, reemplazar el anterior
+        if ($request->hasFile('archivo')) {
+            // Eliminar la imagen anterior si existe
+            if ($marca->archivo && file_exists(public_path('archivos/' . $marca->archivo))) {
+                unlink(public_path('archivos/' . $marca->archivo));
+            }
+
+            $archivo = $request->file('archivo');
+            $nombreArchivo = time() . '.' . $archivo->getClientOriginalExtension();
+            $archivo->move(public_path('archivos'), $nombreArchivo);
+
+            $marca->archivo = $nombreArchivo; // Guardar el nuevo archivo
+        }
+
         $marca->save();
-    
-        return redirect()->route('catalogarmarcas')->with('success', 'Marca actualizada correctamente.');
+
+        session()->flash('success', 'Marca actualizada correctamente.');
+
+        return redirect()->back();
     }
-    
 
     // 🔹 4. Eliminar una marca
     public function destroy($idma)

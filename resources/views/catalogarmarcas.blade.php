@@ -109,6 +109,12 @@
             <!-- Botón para agregar nueva marca -->
             <button class="btn btn-primary" data-toggle="modal" data-target="#modalAgregarMarca" onclick="limpiarFormulario()">Agregar Marca</button>
         </div>
+        @if(session('success'))
+        <div class="alert alert-success alert-dismissible fade show" role="alert" id="successMessage">
+            {{ session('success') }}
+            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+        </div>
+    @endif
         <table class="table">
             <thead>
                 <tr>
@@ -127,9 +133,9 @@
                         <td>{{ $marca->descripcion }}</td>
                         <td>
                             @if($marca->archivo)
-                            <img src = "{{url('archivos/'.$marca->archivo)}}" height =50 width=50></td>
+                                <img src="{{ asset('archivos/' . $marca->archivo) }}" alt="Logo de {{ $marca->nombre_marca }}" width="50">
                             @else
-                                <span>No disponible</span>
+                                <span>Sin imagen</span>
                             @endif
                         </td>
                         <td>
@@ -242,6 +248,12 @@
             let formAction = document.getElementById("marcaFormEdit").action;
             document.getElementById("marcaFormEdit").action = formAction.replace(':id', id);
         }
+
+        @if(session('success'))
+        setTimeout(function() {
+            document.getElementById('successMessage').style.display = 'none';
+        }, 3000); // 3000ms = 3 segundos
+        @endif
     </script>
 
     <script src="https://code.jquery.com/jquery-3.5.1.slim.min.js"></script>
