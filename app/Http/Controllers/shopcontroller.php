@@ -88,17 +88,15 @@ class shopcontroller extends Controller
     {
         $request->validate([
             'nombre_marca' => 'required|string|max:255',
-            'descripcion' => 'required|string', // Validación de la descripción
+            'descripcion' => 'required|string',
             'archivo' => 'nullable|image|mimes:jpeg,png,jpg,gif|max:2048',
         ]);
 
-        $marca = marcas::findOrFail($id);
+        $marca = Marcas::findOrFail($id);
         $marca->nombre_marca = $request->nombre_marca;
-        $marca->descripcion = $request->descripcion; // Asegúrate de agregar la descripción
+        $marca->descripcion = $request->descripcion;
 
-        // Si se sube un nuevo archivo, reemplazar el anterior
         if ($request->hasFile('archivo')) {
-            // Eliminar la imagen anterior si existe
             if ($marca->archivo && file_exists(public_path('archivos/' . $marca->archivo))) {
                 unlink(public_path('archivos/' . $marca->archivo));
             }
@@ -106,15 +104,12 @@ class shopcontroller extends Controller
             $archivo = $request->file('archivo');
             $nombreArchivo = time() . '.' . $archivo->getClientOriginalExtension();
             $archivo->move(public_path('archivos'), $nombreArchivo);
-
-            $marca->archivo = $nombreArchivo; // Guardar el nuevo archivo
+            $marca->archivo = $nombreArchivo;
         }
 
         $marca->save();
 
-        session()->flash('success', 'Marca actualizada correctamente.');
-
-        return redirect()->back();
+        return redirect()->route('catalogarmarcas')->with('success', 'Marca actualizada correctamente.');
     }
 
     // 🔹 4. Eliminar una marca
